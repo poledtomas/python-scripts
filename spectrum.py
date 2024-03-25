@@ -84,7 +84,7 @@ def spectrum(directory,output_file, NoF, NoE):
                                             dNp_ev[ptBin]+= 1
                             
                                         elif (id == 1000010020):
-                                            print(id)
+                                            
                                             dND_ev[ptBin]+= 1
                                         elif (id == -1000010020):
                                             dNantiD_ev[ptBin]+= 1 
@@ -127,6 +127,6 @@ def spectrum(directory,output_file, NoF, NoE):
             file.write("%s\n"%dNantiD[i])
             
             print(str(dNpi[i]) + "\t"+ str(dNp[i])+"\t"+str(dNK[i])+"\t"+str(dND[i])+"\t"+str(dNantiD[i]))
-spectrum("/storage/praha1/home/poledto1/hydro/hybrid/sampler.out/lhc2760-10-20-3000-deuteron/","llhc2760-10-20-3000-deuteron", NoF=100, NoE=100)
-#spectrum(str(sys.argv[1]),str(sys.argv[2]),int(sys.argv[3]),int(sys.argv[4]))
+#spectrum("/storage/praha1/home/poledto1/hydro/hybrid/sampler.out/lhc2760-10-20-3000-deuteron/","llhc2760-10-20-3000-deuteron", NoF=100, NoE=100)
+spectrum(str(sys.argv[1]),str(sys.argv[2]),int(sys.argv[3]),int(sys.argv[4]))
 #vn_C_pT("/storage/brno12-cerit/home/poledto1/hydro/hybrid/sampler.out/lhc5020-10-20-norm135","lhc5020-10-20-norm135", NoF=10, NoE=10, order=2)
