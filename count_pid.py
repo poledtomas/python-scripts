@@ -75,5 +75,5 @@ def count_pid(directory, NoF, NoE, pid):
             
  
 #dndeta("/storage/brno12-cerit/home/poledto1/hydro/hybrid/sampler.out/diplomka/lhc5020-20-30-norm135/","lhc5020-20-30-norm135", NoF=10, NoE=100)
-#count_pid(str(sys.argv[1]),int(sys.argv[2]),int(sys.argv[3]),int(sys.argv[4]))
-count_pid("/storage/praha1/home/poledto1/hydro/hybrid/sampler.out/lhc2760-10-20-3000-deuteron", NoF=100, NoE=100, pid=1000010020)
+count_pid(str(sys.argv[1]),int(sys.argv[2]),int(sys.argv[3]),int(sys.argv[4]))
+#count_pid("/storage/praha1/home/poledto1/hydro/hybrid/sampler.out/lhc2760-10-20-3000-deuteron", NoF=100, NoE=100, pid=1000010020)
