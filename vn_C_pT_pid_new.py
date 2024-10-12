@@ -84,12 +84,11 @@ def vn_C_pT_pid_new(directory, output_file, NoF, NoE, order, pid):
             continue
 
         with open(filename, "r") as infile:
-            for _ in range(3):  # Skip first three lines
+            for _ in range(3):
                 next(infile)
 
             nevents = 0
 
-            # Loop over events
             for iev in range(0, NoE, eventStep):
                 Qx = Qy = Qx2 = Qy2 = 0
                 RFP = 0
@@ -106,7 +105,6 @@ def vn_C_pT_pid_new(directory, output_file, NoF, NoE, order, pid):
                     if npart > 0:
                         nevents += 1
 
-                        # Loop over particles
                         for _ in range(npart):
                             line = infile.readline().strip().split(" ")
                             m, E, px, py, pz, id, ele = map(
