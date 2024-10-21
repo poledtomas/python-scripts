@@ -1,20 +1,4 @@
-# python-scripts
 
-Python scripts for hydrodynamic simulations
-
-# Process description
-
-Create Python virtual environment::
-
-python3 -m venv --clear venv
-./venv/bin/pip install --upgrade pip
-./venv/bin/pip install -r requirements.txt
-
-## Downloading and processing the data
-
-To run scripts, use for example::
-
-./venv/bin/spectrum.py "directory" "output" NoF NoE
 
 Contribution guidelines
 =======================
