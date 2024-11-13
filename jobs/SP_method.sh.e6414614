@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/auto/brno12-cerit/nfs4/home/poledto1/hydro/hybrid/root_scripts/python-scripts/vn_SP_pT_pid.py", line 153, in <module>
+    vn_SP_pT_pid(
+  File "/auto/brno12-cerit/nfs4/home/poledto1/hydro/hybrid/root_scripts/python-scripts/vn_SP_pT_pid.py", line 118, in vn_SP_pT_pid
+    gap = with_gap_calculation(QxA, QyA, QxB, QyB, MA, MB)
+  File "/auto/brno12-cerit/nfs4/home/poledto1/hydro/hybrid/root_scripts/python-scripts/vn_SP_pT_pid.py", line 8, in with_gap_calculation
+    return numerator / denominator
+ZeroDivisionError: float division by zero
+Cgroup mem limit exceeded: 
+Cgroup memsw limit exceeded: 

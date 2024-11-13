@@ -1,5 +1,4 @@
 import math as mt
-import sys
 
 
 def def_ave_2partucle_correlation(pnx, pny, Qx, Qy, mq, mp, M):
@@ -91,19 +90,13 @@ def vn_C_pT_pid(directory, output_file, NoF, NoE, order, pid):
     dpt = (ptMaxCut - ptMinCut) / ptBins
     POI = [0] * ptBins
     dn2 = [0] * ptBins
-    dn4 = [0] * ptBins
     vn2 = [0] * ptBins
-    vn4 = [0] * ptBins
 
     dn2_nom = [0] * ptBins
     dn2_denom = [0] * ptBins
-    dn4_nom = [0] * ptBins
-    dn4_denom = [0] * ptBins
 
     cn2_nom = 0
     cn2_denom = 0
-    cn4_nom = 0
-    cn4_denom = 0
 
     for ifls in range(1, NoF + 1):
         filename = f"{directory}{ifls}_fin.oscar"
@@ -121,18 +114,15 @@ def vn_C_pT_pid(directory, output_file, NoF, NoE, order, pid):
                     line = infile.readline().strip()
                     pars = line.split()
 
-                    Qx = Qy = Qx2 = Qy2 = 0
+                    Qx = Qy = 0
                     RFP = 0
                     POI = [0] * ptBins
                     qx = [0] * ptBins
                     qy = [0] * ptBins
-                    qx2 = [0] * ptBins
-                    qy2 = [0] * ptBins
 
                     cumulant2 = 0
-                    cumulant4 = 0
+
                     cummulant = [0] * ptBins
-                    cumulantfour = [0] * ptBins
 
                     if len(pars) < 5:
                         continue
@@ -172,67 +162,29 @@ def vn_C_pT_pid(directory, output_file, NoF, NoE, order, pid):
                                 POI[ptBin] += 1
                                 Qx += mt.cos(order * phi)
                                 Qy += mt.sin(order * phi)
-                                Qx2 += mt.cos(2 * order * phi)
-                                Qy2 += mt.sin(2 * order * phi)
                                 qx[ptBin] += mt.cos(order * phi)
                                 qy[ptBin] += mt.sin(order * phi)
-                                qx2[ptBin] += mt.cos(2 * order * phi)
-                                qy2[ptBin] += mt.sin(2 * order * phi)
-
-                        infile.readline()
 
                 if RFP > 0:
                     cumulant2 = ave_2particle_correlation(Qx, Qy, RFP)
                     cn2_nom += RFP * (RFP - 1) * cumulant2
                     cn2_denom += RFP * (RFP - 1)
 
-                    cumulant4 = ave_4particle_correlation(Qx, Qy, Qx2, Qy2, RFP)
-                    cn4_nom += RFP * (RFP - 1) * (RFP - 2) * (RFP - 3) * cumulant4
-                    cn4_denom += RFP * (RFP - 1) * (RFP - 2) * (RFP - 3)
-
                     for ipt in range(ptBins):
                         if POI[ipt] > 0:
                             cummulant[ipt] = def_ave_2partucle_correlation(
                                 qx[ipt], qy[ipt], Qx, Qy, POI[ipt], POI[ipt], RFP
                             )
-                            cumulantfour[ipt] = def_ave_4particle_correlation(
-                                qx[ipt],
-                                qy[ipt],
-                                qx2[ipt],
-                                qy2[ipt],
-                                Qx,
-                                Qy,
-                                Qx2,
-                                Qy2,
-                                RFP,
-                                POI[ipt],
-                                POI[ipt],
-                            )
 
                             dn2_nom[ipt] += (POI[ipt] * RFP - POI[ipt]) * cummulant[ipt]
                             dn2_denom[ipt] += POI[ipt] * RFP - POI[ipt]
-
-                            dn4_nom[ipt] += (
-                                (POI[ipt] * RFP - 3 * POI[ipt])
-                                * (RFP - 1)
-                                * (RFP - 2)
-                                * cumulantfour[ipt]
-                            )
-                            dn4_denom[ipt] += (
-                                (POI[ipt] * RFP - 3 * POI[ipt]) * (RFP - 1) * (RFP - 2)
-                            )
-
-                    infile.readline()
 
         except FileNotFoundError:
             print(f"Warning: Missing file #{ifls}")
 
     cn2 = cn2_nom / cn2_denom
-    cn4 = cn4_nom / cn4_denom - 2 * cn2 * cn2
-    vn_4 = pow(-cn4, 0.25)
 
     print(f"v_{int(order)}{{2}}: ", mt.sqrt(cn2))
-    print(f"v_{int(order)}{{4}}: ", vn_4)
 
     with open(output_file + "_" + str(pid) + "_ele.dat", "w") as file:
         print("Results have been written to: %s.dat" % output_file)
@@ -241,23 +193,29 @@ def vn_C_pT_pid(directory, output_file, NoF, NoE, order, pid):
             dn2[ipt] = dn2_nom[ipt] / dn2_denom[ipt]
             vn2[ipt] = dn2[ipt] / mt.sqrt(cn2)
 
-            dn4[ipt] = dn4_nom[ipt] / dn4_denom[ipt] - 2 * dn2[ipt] * cn2
-            vn4[ipt] = -dn4[ipt] / pow(-cn4, 0.75)
             ptBin = (ipt + 0.5) * dpt + ptMinCut
             file.write("%s\t" % round(ptBin, 2))
             file.write("%s\t" % vn2[ipt])
-            file.write("%s\t" % vn4[ipt])
             file.write("%s\t" % cn2)
-            file.write("%s\n" % cn4)
 
-            print(round(ptBin, 2), vn2[ipt], vn4[ipt])
+            print(round(ptBin, 2), vn2[ipt])
 
 
-vn_C_pT_pid(
-    str(sys.argv[1]),
-    str(sys.argv[2]),
-    int(sys.argv[3]),
-    int(sys.argv[4]),
-    int(sys.argv[5]),
-    int(sys.argv[6]),
-)
+# Main execution block for command-line arguments
+if __name__ == "__main__":
+    vn_C_pT_pid(
+        "/storage/brno12-cerit/home/poledto1/hydro/hybrid/sampler.out/lhc2760-20-30-deuteron/",
+        "lhc2760-20-30-deuteron",
+        100,
+        100,
+        2,
+        2212,
+    )
+# vn_C_pT_pid(
+#    str(sys.argv[1]),
+#    str(sys.argv[2]),
+#    int(sys.argv[3]),
+#    int(sys.argv[4]),
+#    int(sys.argv[5]),
+#    int(sys.argv[6]),
+# )
