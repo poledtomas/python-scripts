@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/auto/brno12-cerit/nfs4/home/poledto1/hydro/hybrid/root_scripts/python-scripts/spectrum.py", line 142, in <module>
-    spectrum(str(sys.argv[1]), str(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
-  File "/auto/brno12-cerit/nfs4/home/poledto1/hydro/hybrid/root_scripts/python-scripts/spectrum.py", line 49, in spectrum
-    npart = int(pars[4])
-ValueError: invalid literal for int() with base 10: '0.138'
-Cgroup mem limit exceeded: 
-Cgroup memsw limit exceeded: 

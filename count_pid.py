@@ -55,7 +55,7 @@ def count_pid(directory, NoF, NoE, pid):
                                 0.5 * mt.log((p + pz) / (p - pz)) if p - pz != 0 else 0
                             )
                             if ele != 0 and etaMin < eta < etaMax:
-                                if id == pid:
+                                if abs(id) == pid:
                                     count += 1
 
                     infile.readline()

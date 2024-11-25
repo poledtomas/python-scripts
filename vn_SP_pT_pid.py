@@ -18,9 +18,9 @@ def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
     print(f"\n\nCalculating v_{int(order)}{{2}} (pT)...")
     print(f"Processing events from directory: {direct}")
 
-    ptMinCut = 0.2
-    ptMaxCut = 3.0
-    ptBins = 14
+    ptMinCut = 0.9
+    ptMaxCut = 4.5
+    ptBins = 12
     dpt = (ptMaxCut - ptMinCut) / ptBins
     nevents = 0
 
@@ -36,6 +36,7 @@ def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
     eta_range_A = (2.8, 5.1)
     eta_range_C = (-0.8, 0.8)
     eta_range_B = (-3.7, -1.7)
+
     # Loop over files
     for ifls in range(1, NoF + 1):
         filename = f"{direct}/{ifls}_fin.oscar"
@@ -47,7 +48,7 @@ def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
                     infile.readline()
 
                 # Loop over events in file
-                for iev in range(0, NoE, eventStep):
+                for iev in range(1, NoE + 1):
                     MA = MB = 0
                     POI = [0] * ptBins
                     diff_cumulant2 = [0.0] * ptBins
@@ -64,9 +65,12 @@ def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
                     for _ in range(eventStep):
                         line = infile.readline().strip().split()
 
-                        if len(line) < 5:
+                        if len(line) <= 5:
+                            npart = int(line[4])
+
+                        else:
+                            print(line, filename)
                             continue
-                        npart = int(line[4])
 
                         if npart > 0:
                             nevents += 1
@@ -87,29 +91,30 @@ def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
                                 if ptMinCut < pt < ptMaxCut:
                                     ptBin = int((pt - ptMinCut) / dpt)
 
-                                    if (
-                                        eta_range_A[0] < eta < eta_range_A[1]
-                                        and abs(id) != pid
-                                    ):
-                                        QxA += math.cos(order * phi)
-                                        QyA += math.sin(order * phi)
-                                        MA += 1
+                                    if 0 <= ptBin < ptBins:
+                                        if (
+                                            eta_range_A[0] < eta < eta_range_A[1]
+                                            and abs(id) != pid
+                                        ):
+                                            QxA += math.cos(order * phi)
+                                            QyA += math.sin(order * phi)
+                                            MA += 1
 
-                                    elif (
-                                        eta_range_B[0] < eta < eta_range_B[1]
-                                        and abs(id) != pid
-                                    ):
-                                        QxB += math.cos(order * phi)
-                                        QyB += math.sin(order * phi)
-                                        MB += 1
+                                        elif (
+                                            eta_range_B[0] < eta < eta_range_B[1]
+                                            and abs(id) != pid
+                                        ):
+                                            QxB += math.cos(order * phi)
+                                            QyB += math.sin(order * phi)
+                                            MB += 1
 
-                                    elif (
-                                        abs(id) == pid
-                                        and eta_range_C[0] < eta < eta_range_C[1]
-                                    ):
-                                        ux[ptBin] += math.cos(order * phi)
-                                        uy[ptBin] += math.sin(order * phi)
-                                        POI[ptBin] += 1
+                                        elif (
+                                            abs(id) == pid
+                                            and eta_range_C[0] < eta < eta_range_C[1]
+                                        ):
+                                            ux[ptBin] += math.cos(order * phi)
+                                            uy[ptBin] += math.sin(order * phi)
+                                            POI[ptBin] += 1
 
                         infile.readline()
 
@@ -141,7 +146,7 @@ def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
     output_filename = f"vn_SP_pT_pair_{pid}_{output_file}.dat"
     with open(output_filename, "a") as fout:
         fout.write(f"{direct}\t{int(order)}\t{pid}\n")
-        fout.write(f"{nevents}")
+        fout.write(f"{nevents}\n")
         for i in range(ptBins):
             ptBin = (i + 0.5) * dpt + ptMinCut
             vn2[ipt] = (dn2_nom[i] / dn2_denom[i]) / math.sqrt((cn2))

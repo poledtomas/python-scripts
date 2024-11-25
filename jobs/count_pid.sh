@@ -6,4 +6,4 @@
 cd /storage/brno12-cerit/home/poledto1/hydro/hybrid/root_scripts/python-scripts
 source venv/bin/activate
 
-python count_pid.py "/storage/brno12-cerit/home/poledto1/hydro/hybrid/sampler.out/lhc2760-30-40-deuteron/"  3000 500 1000010020 
+python count_pid.py "/storage/brno12-cerit/home/poledto1/hydro/hybrid/sampler.out/lhc2760-80-90-deuteron/"  3000 500 1000010020 

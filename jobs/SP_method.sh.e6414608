@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/auto/brno12-cerit/nfs4/home/poledto1/hydro/hybrid/root_scripts/python-scripts/vn_SP_pT_pid.py", line 153, in <module>
-    vn_SP_pT_pid(
-  File "/auto/brno12-cerit/nfs4/home/poledto1/hydro/hybrid/root_scripts/python-scripts/vn_SP_pT_pid.py", line 70, in vn_SP_pT_pid
-    npart = int(line[4])
-ValueError: invalid literal for int() with base 10: '0.138'
-Cgroup mem limit exceeded: 
-Cgroup memsw limit exceeded: 

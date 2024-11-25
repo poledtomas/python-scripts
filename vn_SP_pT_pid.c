@@ -6,17 +6,21 @@
 #include <stdlib.h>
 
 using namespace std;
-
-void neco(const char* direct, int NoF, int NoE, double order)
+double with_gap_calculation(double QxA, double QyA, double QxB, double QyB, int MA, int MB) {
+    double numerator = QxA * QxB + QyA * QyB;
+    double denominator = static_cast<double>(MA) * MB;
+    return numerator / denominator;
+}
+void vn_SP_pT_pid(const char* direct, int NoF, int NoE, double order, int pid, string centrality)
 {
   cout << endl << endl << "Calculating v_" << (int)order << "{2} (pT)..." << endl;
   cout << "Processing events from directory: " << direct << endl;
 
   // Cuts
   const double etaCut = 0.8;
-  const double ptMinCut = 0.2;
-  const double ptMaxCut = 3.0;
-  const int ptBins = 14;
+  const double ptMinCut = 0.9;
+  const double ptMaxCut = 4.5;
+  const int ptBins = 12;
   const int eventStep = 1; // number of events in one super-event (to increase statistics)
   const int NS = 10; // number of subsamples to estimate the error
   const double dpt = (ptMaxCut-ptMinCut)/ptBins;
@@ -33,10 +37,13 @@ void neco(const char* direct, int NoF, int NoE, double order)
   // arrays for calculation v_n
   double vn2[ptBins] = {0.0}, vn4[ptBins] = {0.0};
   double dn2[ptBins] = {0.0}, dn2_nom[ptBins] = {0.0}, dn2_denom[ptBins] = {0.0};
+  double dn4[ptBins] = {0.0}, dn4_nom[ptBins] = {0.0}, dn4_denom[ptBins] = {0.0};
   double cn2 = 0.0, cn2_nom = 0.0, cn2_denom = 0.0;
+  double cn4 = 0.0, cn4_nom = 0.0, cn4_denom = 0.0;
   double vn2_err[ptBins] = {0.0}, vn4_err[ptBins] = {0.0};
-
-
+  std::pair<double, double> eta_range_A = {2.8, 5.1};
+std::pair<double, double> eta_range_C = {-0.8, 0.8};
+std::pair<double, double> eta_range_B = {-3.7, -1.7};
 
   // Loop over files
   for (int ifls = 1; ifls < NoF + 1; ifls++) {
@@ -65,13 +72,14 @@ void neco(const char* direct, int NoF, int NoE, double order)
       // Loop over events in file
       for (int iev = 0; iev < NoE; iev += eventStep)
       {
+        int MA =0, MB =0;
         int RFP = 0, POI[ptBins] = {0}; // RFP = M (all particles), POI = m (particles in given ptBin)
         double cumulant2 = 0.0, diff_cumulant2[ptBins] = {0.0};
         double cumulant4 = 0.0, diff_cumulant4[ptBins] = {0.0};
-        double Qx = 0.0, Qy = 0.0;
-        double Qx2 = 0.0, Qy2 = 0.0;
-        double qx[ptBins] = {0.0}, qy[ptBins] = {0.0};
-        double qx2[ptBins] = {0.0}, qy2[ptBins] = {0.0};
+        double QxA = 0.0, QyA = 0.0;
+        double QxB = 0.0, QyB = 0.0;
+        double ux[ptBins] = {0.0}, uy[ptBins] = {0.0};
+       
         complex<double> Q, Q2, q[ptBins], q2[ptBins];
 
         for (int k = 0; k < eventStep; k++) 
@@ -116,43 +124,47 @@ void neco(const char* direct, int NoF, int NoE, double order)
               float phi = atan2(py, px);
               float rap = 0.5*log((E+pz)/(E-pz));
 
-              if(fabs(eta)<etaCut && pt>ptMinCut && pt<ptMaxCut)
-              {
-                RFP++; 
+              if (pt>ptMinCut && pt<ptMaxCut){
                 int ptBin = (pt-ptMinCut)/dpt;
-                POI[ptBin]++;
-                Qx += cos(order*phi);
-                Qy += sin(order*phi);
-                Qx2 += cos(2*order*phi);
-                Qy2 += sin(2*order*phi);
-                qx[ptBin] += cos(order*phi);
-                qy[ptBin] += sin(order*phi);
-                qx2[ptBin] += cos(2*order*phi);
-                qy2[ptBin] += sin(2*order*phi);
+                if (eta > 2.8 && eta < 5.1 && abs(id) != pid) {
+                  QxA += std::cos(order * phi);
+                  QyA += std::sin(order * phi);
+                  MA += 1;
+                } 
+              else if (eta > -3.7 && eta < -1.7 && abs(id) != pid) {
+                  QxB += std::cos(order * phi);
+                  QyB += std::sin(order * phi);
+                  MB += 1;
+                } 
+              else if (abs(id) == pid && eta > -0.8 && eta < 0.8) {
+                ux[ptBin] += std::cos(order * phi);
+                uy[ptBin] += std::sin(order * phi);
+                POI[ptBin] += 1;
               }
+
+              }
+
+              
             }
           }
           fgets(line,500,infile);
         }
 
-        if (RFP > 0)
+        if (MA+MB > 0)
         {
-          Q = complex<double>(Qx, Qy);
-          Q2 = complex<double>(Qx2, Qy2);
-          // calculation of cumulants
-          cumulant2 = (double)(abs(Q)*abs(Q)-RFP)/(RFP*(RFP-1));
-          cumulant4 = (pow(abs(Q),4) + pow(abs(Q2),2) - 2*real(Q2*conj(Q)*conj(Q)) - 4*(RFP-2)*abs(Q)*abs(Q) 
-            + 2*RFP*(RFP-3)) / (RFP*(RFP-1)*(RFP-2)*(RFP-3));
-
-          cn2_nom += RFP*(RFP-1)*cumulant2;
-          cn2_denom += RFP*(RFP-1);
+  
+          cumulant2 =  with_gap_calculation(QxA, QyA, QxB, QyB, MA, MB);
+          
+          cn2_nom += MA*MB*cumulant2;
+          cn2_denom += MA*MB;
           
           for (int ipt = 0; ipt < ptBins; ipt++)
           {
             if (POI[ipt] > 0)
             {
-              q[ipt] = complex<double>(qx[ipt], qy[ipt]);
-              q2[ipt] = complex<double>(qx2[ipt], qy2[ipt]);
+              RFP=MA +MB;
+              Q = complex<double>(QxA+QxB, QyA+QyB);
+              q[ipt] = complex<double>(ux[ipt], uy[ipt]);
               diff_cumulant2[ipt] = real(q[ipt]*conj(Q)-complex<double>(POI[ipt],0))/(POI[ipt]*RFP-POI[ipt]);
               
               dn2_nom[ipt] += (POI[ipt]*RFP - POI[ipt]) * diff_cumulant2[ipt];
@@ -171,18 +183,34 @@ void neco(const char* direct, int NoF, int NoE, double order)
   // final calculation of v_n
   cn2 = cn2_nom / cn2_denom;
 
+  // Write results into the text file (append)
+  ofstream fout;
+  string file="vn_SP_pT_pair_";
+  string dat= ".dat";
+  string mezera = "_";
+  
+  string hadron = to_string(pid);
+  string filename = file+hadron+mezera+centrality+dat;
+  fout.open(filename, ofstream::app);
+
+  fout << direct<<"\t"<<pid<<endl;
+  fout << nevents<<endl;
+
   for (int ipt = 0; ipt < ptBins; ipt++)
   {
     dn2[ipt] = dn2_nom[ipt] / dn2_denom[ipt];
     vn2[ipt] = dn2[ipt] / sqrt(cn2);
 
 
-  }
-
-  for(int ipt = 0; ipt < ptBins; ipt++)
-  {
     double ptBin = (ipt+0.5)*dpt + ptMinCut;
-    cout << ptBin << "\t" << vn2[ipt] << endl;
+  
+
+    cout << ptBin << "\t" << vn2[ipt]  << endl;
+    fout << ptBin << "\t" << vn2[ipt]  << endl;
   }
+  fout << endl;
+  fout.close();
+
+  cout << "Results have been written to:  "<<filename << endl;
   
 }

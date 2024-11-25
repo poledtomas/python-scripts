@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/auto/brno12-cerit/nfs4/home/poledto1/hydro/hybrid/root_scripts/python-scripts/vn_SP_pT_pid.py", line 153, in <module>
-    vn_SP_pT_pid(
-  File "/auto/brno12-cerit/nfs4/home/poledto1/hydro/hybrid/root_scripts/python-scripts/vn_SP_pT_pid.py", line 45, in vn_SP_pT_pid
-    with open(filename, "r") as infile:
-PermissionError: [Errno 13] Permission denied: '/storage/brno12-cerit/home/poledto1/hydro/hybrid/sampler.out/lhc2760-10-20-deuteron//702_fin.oscar'
-Cgroup mem limit exceeded: 
-Cgroup memsw limit exceeded: 
