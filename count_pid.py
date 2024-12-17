@@ -2,7 +2,7 @@ import math as mt
 import sys
 
 
-def count_pid(directory, NoF, NoE, pid):
+def count_pid(directory, output_file, NoF, NoE, pid):
     print("\n\nCalculating sum of particles...")
     print(f"Processing events from directory: {directory}")
 
@@ -64,11 +64,16 @@ def count_pid(directory, NoF, NoE, pid):
             print(f"Warning: Missing file #{ifls}")
 
     print(f"Number of particles == {pid} is {count}")
+    print(nevents)
+    output_filename = output_file + str(pid) + ".dat"
+    with open(output_filename, "a") as fout:
+        fout.write(f"{count}\t{nevents}\n")
 
 
 count_pid(
     str(sys.argv[1]),
-    int(sys.argv[2]),
+    str(sys.argv[2]),
     int(sys.argv[3]),
     int(sys.argv[4]),
+    int(sys.argv[5]),
 )

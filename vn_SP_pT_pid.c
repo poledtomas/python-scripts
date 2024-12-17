@@ -175,7 +175,8 @@ std::pair<double, double> eta_range_B = {-3.7, -1.7};
         }
       }
     }
-    if ((ifls)%((int)NoF/20) == 0) cout << (int)100*ifls/NoF << "%" << endl;
+    fclose(infile);
+    //if ((ifls)%((int)NoF/20) == 0) cout << (int)100*ifls/NoF << "%" << endl;
   }
 
   cout << "Total number of events: " << nevents << endl;
