@@ -15,12 +15,12 @@ def scalar_product(ux, uy, Qx, Qy, MA, MB):
     return numerator / denominator
 
 
-def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
+def vn_SP_pT_pid_events(direct, output_file, file_start, NoF, order, pid, NoE):
     print(f"\n\nCalculating v_{int(order)}{{2}} (pT)...")
     print(f"Processing events from directory: {direct}")
 
     ptMinCut = 0.0
-    ptMaxCut = 4.5
+    ptMaxCut = 5.0
     ptBins = 15
     dpt = (ptMaxCut - ptMinCut) / ptBins
     nevents = 0
@@ -39,14 +39,14 @@ def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
     eta_range_B = (-3.7, -1.7)
 
     # Loop over files
-    for ifls in range(1, NoF + 1):
+    for ifls in range(file_start, NoF + 1):
         filename = f"{direct}{ifls}_fin.oscar"
+        print(filename)
         try:
             with open(filename, "r") as infile:
                 # Skip header lines
                 for _ in range(3):
                     infile.readline()
-
                 # Loop over events in file
                 for iev in range(1, NoE + 1):
                     MA = MB = 0
@@ -73,13 +73,12 @@ def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
 
                         if npart > 0:
                             nevents += 1
+                            print(nevents)
 
                             # Loop over particles
                             for _ in range(npart):
                                 line = infile.readline().strip().split()
                                 if len(line) > 5:
-                                    # nevents +=1
-                                    # print(line)
                                     px = float(line[6].strip().replace("\x00", ""))
                                     py = float(line[7])
                                     pz = float(line[8])
@@ -87,10 +86,6 @@ def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
 
                                     pt = math.sqrt(px**2 + py**2)
                                     pabs = math.sqrt(px**2 + py**2 + pz**2)
-                                    if pabs == pz:
-                                        pabs = pabs + 0.000001
-                                    elif ((pabs + pz) / (pabs - pz)) == 0:
-                                        pabs = pabs + 0.000001
                                     eta = 0.5 * math.log((pabs + pz) / (pabs - pz))
                                     phi = math.atan2(py, px)
 
@@ -170,11 +165,12 @@ def vn_SP_pT_pid(direct, output_file, NoF, NoE, order, pid):
         fout.close()
 
 
-vn_SP_pT_pid(
+vn_SP_pT_pid_events(
     str(sys.argv[1]),
     str(sys.argv[2]),
     int(sys.argv[3]),
     int(sys.argv[4]),
     int(sys.argv[5]),
     int(sys.argv[6]),
+    int(sys.argv[7]),
 )
