@@ -1,142 +1,210 @@
-import math as mt
-import sys
+import argparse
+import math
+import os
+import re
+from typing import List, Optional
+
+_TOKEN_SPLIT_RE = re.compile(r"[\s,]+")
 
 
-def spectrum(directory, output_file, NoF, NoE):
-    print("\n\nCalculating sum of particles...")
-    print(f"Processing events from directory: {directory}")
+def _parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(
+        description="Compute dN/dpT from OSCAR files (Python port of spectrum.c)."
+    )
+    p.add_argument(
+        "direct", help="Prefix/path used as: direct + i + '_fin.oscar' (i=1..NoF)"
+    )
+    p.add_argument("NoF", type=int, help="Number of files")
+    p.add_argument("NoE", type=int, help="Number of events per file")
+    p.add_argument("--out", default="spectrum.dat", help="Output file (append)")
+    return p.parse_args()
 
-    # Cuts
+
+def _tokenize(line: str) -> List[str]:
+    line = line.strip()
+    if not line:
+        return []
+    return [tok for tok in _TOKEN_SPLIT_RE.split(line) if tok]
+
+
+def _safe_float(token: str) -> Optional[float]:
+    try:
+        return float(token)
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_int(token: str) -> Optional[int]:
+    try:
+        return int(token)
+    except (TypeError, ValueError):
+        return None
+
+
+def spectrum(
+    direct: str, NoF: int, NoE: int, output_path: str = "spectrum.dat"
+) -> None:
+
+    print("\n\nCalculating dN/dp_t...")
+    print(f"Processing events from directory: {direct}")
+
     ptMin = 0.2
     ptMax = 2.0
     yCut = 0.1
-
-    nBins = 50
+    nBins = 36
+    pi = math.pi
     dpt = (ptMax - ptMin) / nBins
 
-    dNpi = [0] * nBins
-    dNK = [0] * nBins
-    dNp = [0] * nBins
-    dND = [0] * nBins
-    dNantiD = [0] * nBins
+    dNpi = [0.0] * nBins
+    dNK = [0.0] * nBins
+    dNp = [0.0] * nBins
 
-    dNpi_ev = [0] * nBins
-    dNK_ev = [0] * nBins
-    dNp_ev = [0] * nBins
-    dND_ev = [0] * nBins
-    dNantiD_ev = [0] * nBins
+    dNpi_err_acc = [0.0] * nBins
+    dNK_err_acc = [0.0] * nBins
+    dNp_err_acc = [0.0] * nBins
+
     nevents = 0
+    progress_step = max(1, NoF // 20) if NoF > 0 else 1
 
-    # Loop over files
     for ifls in range(1, NoF + 1):
-        filename = f"{directory}{ifls}_fin.oscar"
+        filename = f"{direct}{ifls}_fin.oscar"
+        print(f"Processing file: {filename}")
+
+        if not os.path.exists(filename):
+            print(f"Warning: Missing file #{ifls}")
+            if ifls % progress_step == 0:
+                print(f"{int(100 * ifls / NoF)}%")
+            continue
 
         try:
-            with open(filename, "r") as infile:
-                # Skip first 3 lines
-                next(infile)
-                next(infile)
-                next(infile)
+            with open(filename, "r", encoding="utf-8", errors="replace") as f:
+                # přesně jako 3x fgets v C
+                for _ in range(3):
+                    if f.readline() == "":
+                        break
 
-                # Loop over events in the file
-                for iev in range(NoE):
-                    line = infile.readline().strip()
-                    pars = line.split()
+                for _iev in range(NoE):
+                    header = f.readline()
+                    if header == "":
+                        break
 
-                    if len(pars) < 5:
+                    parts = _tokenize(header)
+                    if len(parts) < 5:
                         continue
 
-                    npart = int(pars[4])
+                    npart_val = _safe_int(parts[4])
+                    if npart_val is None or npart_val <= 0:
+                        continue
 
-                    if npart > 0:
-                        nevents += 1
+                    npart = npart_val
+                    nevents += 1
 
-                        # Loop over particles
-                        for i in range(npart):
-                            line = infile.readline().strip()
-                            pars = line.split()
+                    dNpi_ev = [0.0] * nBins
+                    dNK_ev = [0.0] * nBins
+                    dNp_ev = [0.0] * nBins
 
-                            if len(pars) < 12:
-                                continue
-                            E = float(pars[5])
-                            px = float(pars[6])
-                            py = float(pars[7])
-                            pz = float(pars[8])
+                    for i in range(npart):
+                        line = f.readline()
+                        if line == "":
+                            break
 
-                            # Calculate eta
-                            pt = mt.sqrt(px**2 + py**2)
-                            if (
-                                id == 211
-                                or id == 321
-                                or id == 2212
-                                or id == 1000010020
-                                or id == -1000010020
-                            ):
-                                if E != abs(pz):
-                                    rap = 0.5 * mt.log((E + pz) / (E - pz))
-                                    ptBin = int((pt - ptMin) / dpt)
-                                    if abs(rap) < yCut and pt > ptMin and pt < ptMax:
-                                        if id == 211:
-                                            dNpi_ev[ptBin] += 1
-                                        elif id == 321:
-                                            dNK_ev[ptBin] += 1
-                                        elif id == 2212:
-                                            dNp_ev[ptBin] += 1
+                        pars = _tokenize(line)
+                        if len(pars) < 10:
+                            continue
 
-                                        elif id == 1000010020:
-                                            dND_ev[ptBin] += 1
-                                        elif id == -1000010020:
-                                            dNantiD_ev[ptBin] += 1
-                        for ibin in range(nBins):
-                            dNpi[ibin] += dNpi_ev[ibin]
-                            dNK[ibin] += dNK_ev[ibin]
-                            dNp[ibin] += dNp_ev[ibin]
-                            dND[ibin] += dND_ev[ibin]
-                            dNantiD[ibin] += dNantiD[ibin]
+                        # indexy odpovídají pars[4..9] v C
+                        m = _safe_float(pars[4])
+                        E = _safe_float(pars[5])
+                        px = _safe_float(pars[6])
+                        py = _safe_float(pars[7])
+                        pz = _safe_float(pars[8])
+                        pid = _safe_int(pars[9])
 
-                    infile.readline()
+                        if None in (m, E, px, py, pz, pid):
+                            continue
 
-        except FileNotFoundError:
-            print(f"Warning: Missing file #{ifls}")
+                        pt = math.sqrt(px * px + py * py)
 
-    output_path = f"spectrum_{output_file}.dat"
-    with open(output_path, "w") as file:
-        print(f"Results have been written to: {output_path}")
-        file.write(f"{directory}\n")
+                        denom = E - pz
+                        num = E + pz
+                        if denom <= 0.0 or num <= 0.0:
+                            continue
+
+                        rap = 0.5 * math.log(num / denom)
+
+                        if abs(rap) < yCut and pt > ptMin and pt < ptMax:
+                            ptBin = int((pt - ptMin) / dpt)
+                            if 0 <= ptBin < nBins:
+                                if pid == 211:
+                                    dNpi_ev[ptBin] += 1.0
+                                if pid == 321:
+                                    dNK_ev[ptBin] += 1.0
+                                if pid == 2212:
+                                    dNp_ev[ptBin] += 1.0
+
+                    _ = f.readline()
+
+                    for ibin in range(nBins):
+                        dNpi[ibin] += dNpi_ev[ibin]
+                        dNK[ibin] += dNK_ev[ibin]
+                        dNp[ibin] += dNp_ev[ibin]
+                        dNpi_err_acc[ibin] += dNpi_ev[ibin] * dNpi_ev[ibin]
+                        dNK_err_acc[ibin] += dNK_ev[ibin] * dNK_ev[ibin]
+                        dNp_err_acc[ibin] += dNp_ev[ibin] * dNp_ev[ibin]
+
+        except OSError as e:
+            print(f"Warning: Could not read file #{ifls}: {e}")
+
+        if ifls % progress_step == 0:
+            print(f"{int(100 * ifls / NoF)}%")
+
+    print(f"Total number of events: {nevents}")
+
+    if nevents <= 0:
+        print("No events found; nothing written.")
+        return
+
+    with open(output_path, "a", encoding="utf-8") as fout:
+        fout.write(f"{direct}\n")
+        fout.write("pt\tpi\terr_pi\tK\terr_K\tp\terr_p\n")
 
         for i in range(nBins):
-            pt = ptMin + (i + 0.5) * dpt
+            mean_pi = dNpi[i] / nevents
+            mean_k = dNK[i] / nevents
+            mean_p = dNp[i] / nevents
 
-            dNpi[i] /= nevents
-            dNK[i] /= nevents
-            dNp[i] /= nevents
-            dND[i] /= nevents
-            dNantiD[i] /= nevents
+            # sqrt( <x^2> - <x>^2 ) / sqrt(N)
+            var_pi = dNpi_err_acc[i] / nevents - mean_pi * mean_pi
+            var_k = dNK_err_acc[i] / nevents - mean_k * mean_k
+            var_p = dNp_err_acc[i] / nevents - mean_p * mean_p
 
-            dNpi[i] /= 2 * mt.pi * dpt * 2 * yCut * (ptMin + (i + 0.5) * dpt)
-            dNK[i] /= 2 * mt.pi * dpt * 2 * yCut * (ptMin + (i + 0.5) * dpt)
-            dNp[i] /= 2 * mt.pi * dpt * 2 * yCut * (ptMin + (i + 0.5) * dpt)
-            dND[i] /= 2 * mt.pi * dpt * 2 * yCut * (ptMin + (i + 0.5) * dpt)
-            dNantiD[i] /= 2 * mt.pi * dpt * 2 * yCut * (ptMin + (i + 0.5) * dpt)
+            var_pi = max(0.0, var_pi)
+            var_k = max(0.0, var_k)
+            var_p = max(0.0, var_p)
 
-            file.write("%s\t" % round(pt, 2))
-            file.write("%s\t" % dNpi[i])
-            file.write("%s\t" % dNK[i])
-            file.write("%s\t" % dNp[i])
-            file.write("%s\t" % dND[i])
-            file.write("%s\n" % dNantiD[i])
+            err_pi = math.sqrt(var_pi) / math.sqrt(nevents)
+            err_k = math.sqrt(var_k) / math.sqrt(nevents)
+            err_p = math.sqrt(var_p) / math.sqrt(nevents)
 
-            print(
-                str(dNpi[i])
-                + "\t"
-                + str(dNp[i])
-                + "\t"
-                + str(dNK[i])
-                + "\t"
-                + str(dND[i])
-                + "\t"
-                + str(dNantiD[i])
+            pt_center = ptMin + (i + 0.5) * dpt
+            norm = 2.0 * pi * dpt * 2.0 * yCut * pt_center
+
+            mean_pi /= norm
+            mean_k /= norm
+            mean_p /= norm
+            err_pi /= norm
+            err_k /= norm
+            err_p /= norm
+
+            fout.write(
+                f"{pt_center}\t{mean_pi}\t{err_pi}\t{mean_k}\t{err_k}\t{mean_p}\t{err_p}\n"
             )
 
+        fout.write("\n")
 
-spectrum(str(sys.argv[1]), str(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]))
+    print(f"Results have been written to '{output_path}'")
+
+
+if __name__ == "__main__":
+    args = _parse_args()
+    spectrum(args.direct, args.NoF, args.NoE, output_path=args.out)
