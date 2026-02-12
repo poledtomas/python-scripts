@@ -5,7 +5,7 @@ import numpy as np
 
 
 def dndeta(directory, output_file, NoF, NoE):
-    print("\n\nCalculating sum of particles...")
+    print("\n\nCalculating dndeta...")
     print(f"Processing events from directory: {directory}")
 
     # Cuts
